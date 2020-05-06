@@ -1,0 +1,14 @@
+Input: ./WTF configure localhost <port number>
+Output: a .configure file storing "localhost <port number>
+
+Input: ./WTF create <project name>
+Output: A new directory called <project name> with a .Manifest inside
+
+Input: ./WTF add <project name> <file name>
+Output: An updated .Manifest in the project's directory on the client side, with a new file entry
+
+Input: ./WTF create <existing project name>
+Output: ERROR: File or directory name %s already exists in this directory
+
+Input: ./WTF add <invalid roject name> <file name>
+Output: ERROR: Project folder name does not exist or project could not be open.

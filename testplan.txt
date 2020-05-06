@@ -1,0 +1,1 @@
+To test this program, run "make all" then "make test" then "./WTFtest"
