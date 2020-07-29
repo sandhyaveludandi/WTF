@@ -67,6 +67,10 @@ void* clientThread(void *arg) {
   //If user provided sufficient arguments, obtain port number and address
   portno = atoi(po);
 
+  //struct timeval timeout; 
+  //timeout.tv_sec = 3; 
+  //timeout.tv_sec = 0; 
+
   //Look up IP address that matches up with the name given
   //The name given might be an IP address, which is fine, and store it in the
   //'serverIPAddress' struct
@@ -102,49 +106,60 @@ void* clientThread(void *arg) {
   //Connect to server using blank socket adn the address info struct
   //if it doesn't work, throw error message and exit
 
-  //create
   int conn = connect(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo));
-  //if the user has not set con
+  	//if the user has not set con
   if(conn < 0) {
-    error("ERROR connecting: Configure port number properly.");
+	printf("WARNING: Potential invalid port number.\n"); 
+  	printf("Attempting server connection...\n");  
+  	while(conn < 0) {
+		sleep(3); 
+		printf("Reconnecting...\n"); 
+		conn = connect(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo)); 
+ 	 }
   }
+  
 
   /** Client is connected to server **/
-  printf("Client is now connected to server\n"); 
-  /**CREATE COMMAND**/
-  //argv[1] is create
-  if(strcmp(argv[1], "create") == 0 ) {
-    //Send the number of bytes needed for create (6)
-    char hold[4];
-    hold[3] = '\0';
-    //hold has the length of the project name as a string
-    tostring(hold, strlen(argv[2]));
-    //printf("Hold: %s\n", hold);
-    strcat(hold, ":");
-    strcat(hold, argv[2]);
+  printf("Client is now connected to server.\n"); 
 
-    //printf("Hold: %s\n", hold);
-    char *str = (char*)calloc(strlen(hold)+8, sizeof(char));
-    strcat(str, "6:create;");
-    strcat(str, hold);
-    //printf("Hold: %s\n", str);
+  //keep communicating with server 
+  while(conn >= 0) {
+  	/**CREATE COMMAND**/
+  	//argv[1] is create
+  	if(strcmp(argv[1], "create") == 0 ) {
+    		//Send the number of bytes needed for create (6)
+    		char hold[4];
+    		hold[3] = '\0';
+    		//hold has the length of the project name as a string
+    		tostring(hold, strlen(argv[2]));
+    		//printf("Hold: %s\n", hold);
+    		strcat(hold, ":");
+    		strcat(hold, argv[2]);
 
-    n = write(sockfd, str, strlen(str));
+    		//printf("Hold: %s\n", hold);
+   		char *str = (char*)calloc(strlen(hold)+8, sizeof(char));
+    		strcat(str, "6:create;");
+    		strcat(str, hold);
+    		//printf("Hold: %s\n", str);
 
-    //If writing to server failed, throw error message and exit
-    if(n < 0) {
-      error("ERROR writing to socket");
-    }
-    //create the project directory and .Manifest file after the server has
-    createFunction(conn, argv[2]);
+    		n = write(sockfd, str, strlen(str));
 
-  } else if(strcmp(argv[1], "add") == 0 ) {
-      //argv[2]: project name, argv[3]; file to e added
-      addFunction(argv[2], argv[3]);
-  }
+    		//If writing to server failed, throw error message and exit
+    		if(n < 0) {
+      			error("ERROR writing to socket");
+   		 }
+    		//create the project directory and .Manifest file after the server has
+    		createFunction(conn, argv[2]);
+		exit(1); 
 
-  close(sockfd);
-  pthread_exit(NULL);
+  	}else if(strcmp(argv[1], "add") == 0 ) {
+      		//argv[2]: project name, argv[3]; file to e added
+      		addFunction(argv[2], argv[3]);
+		exit(1); 
+  	}
+}
+  	close(sockfd);
+  	pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[]) {
@@ -156,6 +171,10 @@ int main(int argc, char* argv[]) {
     if(configureFunction(argc, argv) < 0) {
       printf("ERROR: Configure failed\n");
       exit(1);
+    }
+    if(strcmp(argv[2], "localhost") != 0) {
+	printf("ERROR: Please configure to an existing hostname.\n"); 
+	exit(1); 
     }
     printf("Configured Successfully!\n");
     return 1;
@@ -199,7 +218,7 @@ int main(int argc, char* argv[]) {
             printf("ERROR: Wrong number of args for update command.\n");
             exit(1);
         }
-     //printf("Create command used\n");
+     //printf("update command used\n");
   } else if(strcmp(argv[1], "add")==0){
     if(argc != 4){
         printf("Error: Wrong number of args for add command.\n");

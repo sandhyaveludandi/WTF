@@ -30,7 +30,19 @@ int addFunction(char* projName, char* fileName){
     }
     //write fileName to .Manifest
     int w;
-    w = write(manfd, fileName, strlen(fileName));
+    //write a new line,and the intial version 0 to the .Manifest file
+    w = write(manfd, "\n0 ", 3);
+    if(w < 0){
+        printf("Could not write to .Manifest\n");
+        exit(1);
+    }
+
+    char *fullPath = (char*)malloc((strlen(projName)+strlen(fileName)+3)*sizeof(char));
+    strcat(fullPath, "./");
+    strcat(fullPath, projName);
+    strcat(fullPath, "/");
+    strcat(fullPath, fileName);
+    w = write(manfd, fullPath, strlen(fullPath));
     if(w < 0){
         printf("Could not write to .Manifest\n");
         exit(1);

@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <time.h> 
+#include <time.h>
 #include "create.h"
 
 void error(char *msg) {
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
   int clientLength = -1;
   int n = -1; //utility variable - for monitoring reading/writing from/to the socket
   char *buffer; //char array to store data going to and coming from the server
-  char *buffer2; 
+  char *buffer2;
 
   struct sockaddr_in serverAddressInfo; //Super-special secret C struct that holds address info for building our socket
   struct sockaddr_in clientAddressInfo; //Super-special secret C struct that holds info about a machine's address
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 
   //determine the size of a clientaddressInfo struct
   clientLength = sizeof(clientAddressInfo);
- 
+
 
   //block until a client connects, when it does, create a client socket
   while(1)
@@ -83,102 +83,73 @@ int main(int argc, char *argv[]) {
           char buf[2];
           buf[1] = '\0';
           buffer = (char*)calloc(1, sizeof(char));
-          char* pName; 
-          int numBytes; 
-          int isCreate = -1; 
+          char* pName;
+          int numBytes;
+          int isCreate = -1;
 
-        //printf("Server print\n"); 
+
         //reading loop for number of bytes and command like "6:create;9:Project 1"
         while((n = read(newsockfd, &buf[0], sizeof(char))) > 0) {
+          printf("buffer: %s\n", buffer); 
           if(buf[0] == ':') {
-            numBytes = atoi(buffer); 
-            free(buffer); 
+            numBytes = atoi(buffer);
+            free(buffer);
 
-            buffer = (char*)calloc(numBytes, sizeof(char)); 
+            buffer = (char*)calloc(numBytes, sizeof(char));
             n = read(newsockfd, buffer, numBytes);
-            //printf("Buffer: %s\n", buffer); 
+            //printf("Buffer: %s\n", buffer);
 
             //if failed throw error and exit
             if(n < 0) {
-              error("ERROR reading from socket");
+              error("ERROR reading from filedescriptor");
             }
 
             if(strcmp(buffer, "create") == 0) {
-              isCreate = 1; 
-            } 
-
-            if(isCreate == 1) {
-              pName = (char*)calloc(numBytes, sizeof(char)); 
-              strcpy(pName, buffer); 
+              isCreate = 1;
             }
 
-            free(buffer); 
-            buffer = (char*)calloc(1, sizeof(char)); 
-        
+            if(isCreate == 1) {
+              pName = (char*)calloc(numBytes, sizeof(char));
+              strcpy(pName, buffer);
+            }
+
+            free(buffer);
+            buffer = (char*)calloc(1, sizeof(char));
+
         }
         else if(buf[0] == ';') {
           continue;
         }
         else {
           strcat(buffer, buf);
-          //printf("Added Buffer: %s\n", buffer); 
+          //printf("Added Buffer: %s\n", buffer);
         }
     }
-
+     printf("Yohoo\n");
+     free(buffer);
+     buffer = (char*)calloc(1, sizeof(char));
      //Create directory within serverFolder called Project 1
       if(isCreate == 1) {
-        createFunction(newsockfd, pName); 
-      } 
+        printf("Directory created within folder.\n");
+        //write to server if success or failure
+        if(createFunction(newsockfd, pName) == 0) {
+          printf("Directory successfully created.\n");
+          strcat(buffer, "Successfully created folder on server!\n");
+        } else {
+          printf("Failure\n");
+          strcat(buffer, "ERROR: Unable to create folder on server.\n");
+        }
+        n = write(newsockfd, buffer, strlen(buffer));
+        if(n < 0) {
+          error("ERROR: reading from filedescriptor");
+        }
+        printf("Message written to client.\n");
+      }
 
-      close(newsockfd);
+      //free(buffer);
       sleep(1);
     }
-  
 
-  
-  /*
-  //open the .Manifest file from the project
-  if(isCreate == 1) {
-    char* filepath = malloc(strlen(pName) + strlen(".Manifest") + 2);
-    filepath = strcpy(filepath, pName);
-    filepath = strcat(filepath, "/.Manifest");
-    int m = open(filepath, O_RDWR| O_CREAT, S_IRUSR | S_IWUSR); 
-
-    if(m < 0) {
-      error("ERROR opening to file descriptor");
-    }
-
-    n = write(m, , strlen(buffer)); 
-
-    //If writing to client failed, throw error message and exit
-    if(n < 0)
-      error("ERROR writing to socket");
-  }
-  */
-  
-
-  /*
-  //opens listOfNames which is in buffer variable
-  //n is a file descriptor now
-  /*
-  n = open(buffer, O_RDONLY);
-
-  if(n < 0)
-    error("ERROR reading from the file");
-  */
-
-  //zero out the message buffer
-  //bzero(buffer, strlen(buffer)+1);
-
-  //Write the file's contents to the client
-  //Server's response
-  /*
-  n = write(newsockfd, buffer, strlen(buffer));
-
-  //If writing to client failed, throw error message and exit
-  if(n < 0)
-    error("ERROR writing to socket");
-  */
-  //close(newsockfd);
+  close(newsockfd);
   return 0;
 }
