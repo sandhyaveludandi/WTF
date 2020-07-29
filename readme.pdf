@@ -1,0 +1,4 @@
+This project uses a server and client to implement version control for coding projects. The server connects
+to a port and then the client connects to the server, and the user can run various commands on the client side,
+like create, which creates a new project with a .Manifest inside to compare to the server's, add, which adds an
+entry of the file to the .Manifest, and configure, which saves localhost and port number to a .confihure file. 
